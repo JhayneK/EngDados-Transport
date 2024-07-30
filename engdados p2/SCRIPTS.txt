@@ -1,0 +1,389 @@
+import sqlite3
+
+# Conectar ao banco de dados
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+# Criar tabela de Motoristas
+c.execute('''CREATE TABLE Motoristas (
+                MotoristaID INTEGER PRIMARY KEY,
+                Nome TEXT,
+                NumeroCarteira TEXT,
+                DataContratacao DATE,
+                CategoriaCarteira TEXT,
+                Status TEXT
+             )''')
+
+# Criar tabela de Veiculos
+c.execute('''CREATE TABLE Veiculos (
+                VeiculoID INTEGER PRIMARY KEY,
+                TipoVeiculo TEXT,
+                CapacidadeCarga DECIMAL(10, 2),
+                DataAquisicao DATE,
+                EstadoVeiculo TEXT,
+                PlacaVeiculo TEXT
+             )''')
+
+# Criar tabela de Rotas
+c.execute('''CREATE TABLE Rotas (
+                RotaID INTEGER PRIMARY KEY,
+                Origem TEXT,
+                Destino TEXT,
+                Distancia DECIMAL(10, 2),
+                TempoEstimado TIME,
+                RestricoesTrafego TEXT
+             )''')
+
+# Criar tabela de Clientes
+c.execute('''CREATE TABLE Clientes (
+                ClienteID INTEGER PRIMARY KEY,
+                NomeCliente TEXT,
+                EnderecoCliente TEXT,
+                ContatoCliente TEXT,
+                TipoCliente TEXT
+             )''')
+
+# Criar tabela de Cargas
+c.execute('''CREATE TABLE Cargas (
+                CargaID INTEGER PRIMARY KEY,
+                TipoCarga TEXT,
+                PesoCarga DECIMAL(10, 2),
+                Comprimento DECIMAL(10, 2),
+                Largura DECIMAL(10, 2),
+                Altura DECIMAL(10, 2),
+                DataEntregaPrevista DATE
+             )''')
+
+# Criar tabela de Agendamentos
+c.execute('''CREATE TABLE Agendamentos (
+                AgendamentoID INTEGER PRIMARY KEY,
+                DataHoraColeta DATETIME,
+                DataHoraEntrega DATETIME,
+                MotoristaID INTEGER,
+                VeiculoID INTEGER,
+                CargaID INTEGER,
+                FOREIGN KEY (MotoristaID) REFERENCES Motoristas(MotoristaID),
+                FOREIGN KEY (VeiculoID) REFERENCES Veiculos(VeiculoID),
+                FOREIGN KEY (CargaID) REFERENCES Cargas(CargaID)
+             )''')
+
+# Commit para salvar as alterações
+conn.commit()
+
+# Fechar a conexão
+conn.close()
+
+
+#DELETAR DADOS 
+
+# Conectar ao banco de dados
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+c.execute("DELETE FROM Motoristas")
+
+# Commit para salvar as alterações
+conn.commit()
+
+# Fechar a conexão
+conn.close()
+
+Motoristas
+import sqlite3
+from faker import Faker
+import random
+
+# Inicializar o gerador de dados fictícios
+fake = Faker()
+
+# Conectar ao banco de dados
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+def generate_license_plate():
+    letters = ''.join(random.choices(string.ascii_uppercase, k=3))
+    numbers = ''.join(random.choices(string.digits, k=4))
+    return f"{letters}-{numbers}"
+
+# Inserir 10 mil registros na tabela de Motoristas
+for _ in range(10000):
+    nome = fake.name()
+    numero_cart = generate_license_plate()
+    data_contratacao = f'{random.randint(2021, 2025)}-0{random.randint(1, 9)}-{random.randint(10, 28)}'
+    categoria = random.choice(['A', 'B', 'C', 'D', 'E'])
+    status = random.choice(['Ativo', 'Inativo'])
+    c.execute("INSERT INTO Motoristas (Nome, NumeroCarteira, DataContratacao, CategoriaCarteira, Status) VALUES (?, ?, ?, ?, ?)", (nome, numero_cart, data_contratacao, categoria, status))
+
+# Commit para salvar as alterações
+conn.commit()
+
+# Fechar a conexão
+conn.close()
+
+Consultar tabela
+
+import sqlite3
+
+# Conectar ao banco de dados
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+# Consultar todos os dados da tabela de Motoristas
+c.execute("SELECT * FROM Motoristas")
+rows = c.fetchall()
+
+# Exibir os dados
+for row in rows:
+    print(row)
+
+# Fechar a conexão
+conn.close()
+
+ROTAS
+
+import sqlite3
+import random
+from faker import Faker
+
+# Inicializar o gerador de dados fictícios
+fake = Faker()
+
+# Conectar ao banco de dados
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+# Inserir 10 mil registros na tabela de Rotas
+for _ in range(10000):
+    origem = fake.city()
+    destino = fake.city()
+    # Certificar-se de que a origem e o destino não são iguais
+    while origem == destino:
+        destino = fake.city()
+    distancia = round(random.uniform(100, 1000), 2)  # Distância em quilômetros
+    tempo_estimado = f'0{random.randint(1, 5)}:00:00'  # Tempo estimado em horas
+    restricoes_trafego = fake.sentence()  # Restrições de tráfego aleatórias
+    c.execute("INSERT INTO Rotas (Origem, Destino, Distancia, TempoEstimado, RestricoesTrafego) VALUES (?, ?, ?, ?, ?)", (origem, destino, distancia, tempo_estimado, restricoes_trafego))
+
+# Commit para salvar as alterações
+conn.commit()
+
+# Fechar a conexão
+conn.close()
+
+Cargas
+
+import sqlite3
+from faker import Faker
+import random
+
+# Conectar ao banco de dados SQLite (ou criar um novo)
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+# Criar tabela de Cargas (caso ainda não exista)
+c.execute('''CREATE TABLE IF NOT EXISTS Cargas (
+                CargaID INTEGER PRIMARY KEY,
+                TipoCarga TEXT,
+                PesoCarga DECIMAL(10, 2),
+                Comprimento DECIMAL(10, 2),
+                Largura DECIMAL(10, 2),
+                Altura DECIMAL(10, 2),
+                DataEntregaPrevista DATE
+             )''')
+
+# Instanciar Faker
+fake = Faker('pt_BR')
+
+# Função para gerar um tipo de carga aleatório
+def random_tipo_carga():
+    return random.choice(['Perecível', 'Frágil', 'Líquido', 'Sólido', 'Granel', 'Perigoso'])
+
+# Gerar 10.000 cargas fictícias
+cargas = []
+for _ in range(10000):
+    tipo_carga = random_tipo_carga()
+    peso_carga = round(random.uniform(1.0, 10000.0), 2)
+    comprimento = round(random.uniform(0.5, 15.0), 2)
+    largura = round(random.uniform(0.5, 3.0), 2)
+    altura = round(random.uniform(0.5, 4.0), 2)
+    data_entrega_prevista = fake.date_between(start_date='-4y', end_date='+1y')
+    cargas.append((tipo_carga, peso_carga, comprimento, largura, altura, data_entrega_prevista))
+
+# Inserir cargas na tabela
+c.executemany('''INSERT INTO Cargas (TipoCarga, PesoCarga, Comprimento, Largura, Altura, DataEntregaPrevista) 
+                 VALUES (?, ?, ?, ?, ?, ?)''', cargas)
+
+# Salvar (commit) as mudanças
+conn.commit()
+
+# Fechar a conexão com o banco de dados
+conn.close()
+
+print("Tabela 'Cargas' populada com sucesso!")
+
+Agendamentos:
+import sqlite3
+from faker import Faker
+import random
+from datetime import datetime, timedelta
+
+# Conectar ao banco de dados SQLite (ou criar um novo)
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+# Criar tabela de Agendamentos (caso ainda não exista)
+c.execute('''CREATE TABLE IF NOT EXISTS Agendamentos (
+                AgendamentoID INTEGER PRIMARY KEY,
+                DataHoraColeta DATETIME,
+                DataHoraEntrega DATETIME,
+                MotoristaID INTEGER,
+                VeiculoID INTEGER,
+                CargaID INTEGER,
+                FOREIGN KEY (MotoristaID) REFERENCES Motoristas(MotoristaID),
+                FOREIGN KEY (VeiculoID) REFERENCES Veiculos(VeiculoID),
+                FOREIGN KEY (CargaID) REFERENCES Cargas(CargaID)
+             )''')
+
+# Instanciar Faker
+fake = Faker('pt_BR')
+
+# Recuperar os IDs de Motoristas, Veículos e Cargas
+c.execute('SELECT MotoristaID FROM Motoristas')
+motorista_ids = [row[0] for row in c.fetchall()]
+
+c.execute('SELECT VeiculoID FROM Veiculos')
+veiculo_ids = [row[0] for row in c.fetchall()]
+
+c.execute('SELECT CargaID FROM Cargas')
+carga_ids = [row[0] for row in c.fetchall()]
+
+# Verificar se há IDs suficientes
+if not motorista_ids or not veiculo_ids or not carga_ids:
+    raise Exception("As tabelas de Motoristas, Veículos ou Cargas estão vazias. Popule-as antes de criar agendamentos.")
+
+# Função para embaralhar e pegar um ID aleatório
+def get_random_id(ids):
+    random.shuffle(ids)
+    return random.choice(ids)
+
+# Gerar 10.000 agendamentos fictícios
+agendamentos = []
+for _ in range(10000):
+    data_hora_coleta = fake.date_time_between(start_date='-1y', end_date='now')
+    data_hora_entrega = data_hora_coleta + timedelta(hours=random.randint(1, 72))
+    motorista_id = get_random_id(motorista_ids)
+    veiculo_id = get_random_id(veiculo_ids)
+    carga_id = get_random_id(carga_ids)
+    agendamentos.append((data_hora_coleta, data_hora_entrega, motorista_id, veiculo_id, carga_id))
+
+# Inserir agendamentos na tabela
+c.executemany('''INSERT INTO Agendamentos (DataHoraColeta, DataHoraEntrega, MotoristaID, VeiculoID, CargaID) 
+                 VALUES (?, ?, ?, ?, ?)''', agendamentos)
+
+# Salvar (commit) as mudanças
+conn.commit()
+
+# Fechar a conexão com o banco de dados
+conn.close()
+
+print("Tabela 'Agendamentos' populada com sucesso!")
+
+#VEICULOS
+
+import sqlite3
+from faker import Faker
+import random
+
+# Conectar ao banco de dados SQLite (ou criar um novo)
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+# Criar tabela de Veiculos (caso ainda não exista)
+c.execute('''CREATE TABLE IF NOT EXISTS Veiculos (
+                VeiculoID INTEGER PRIMARY KEY,
+                TipoVeiculo TEXT,
+                CapacidadeCarga DECIMAL(10, 2),
+                DataAquisicao DATE,
+                EstadoVeiculo TEXT,
+                PlacaVeiculo TEXT
+             )''')
+
+# Instanciar Faker
+fake = Faker('pt_BR')
+
+# Função para gerar um tipo de veículo aleatório
+def random_tipo_veiculo():
+    return random.choice(['Caminhão', 'Van', 'Carreta', 'Caminhonete', 'Carro'])
+
+# Função para gerar um estado do veículo aleatório
+def random_estado_veiculo():
+    return random.choice(['Novo', 'Usado', 'Manutenção'])
+
+# Função para gerar uma placa de veículo brasileira
+def random_placa_veiculo():
+    return fake.license_plate()
+
+# Gerar 10.000 veículos fictícios
+veiculos = []
+for _ in range(10000):
+    tipo_veiculo = random_tipo_veiculo()
+    capacidade_carga = round(random.uniform(1.0, 30.0), 2)
+    data_aquisicao = fake.date_between(start_date='-10y', end_date='today')
+    estado_veiculo = random_estado_veiculo()
+    placa_veiculo = random_placa_veiculo()
+    veiculos.append((tipo_veiculo, capacidade_carga, data_aquisicao, estado_veiculo, placa_veiculo))
+
+# Inserir veículos na tabela
+c.executemany('''INSERT INTO Veiculos (TipoVeiculo, CapacidadeCarga, DataAquisicao, EstadoVeiculo, PlacaVeiculo) 
+                 VALUES (?, ?, ?, ?, ?)''', veiculos)
+
+# Salvar (commit) as mudanças
+conn.commit()
+
+# Fechar a conexão com o banco de dados
+conn.close()
+
+print("Tabela 'Veiculos' populada com sucesso!")
+
+Exportar para CSV:
+import pandas as pd
+
+# Conectar ao banco de dados
+conn = sqlite3.connect('transporte_logistico.db')
+
+# Consultar dados
+df = pd.read_sql_query("SELECT * FROM Veiculos", conn)
+
+# Exportar para CSV
+df.to_csv('Veiculos.csv', index=False)
+
+# Fechar a conexão
+conn.close()
+
+Clientes:
+#Clientes
+import sqlite3
+from faker import Faker
+
+# Inicializar o gerador de dados fictícios
+fake = Faker()
+
+# Conectar ao banco de dados
+conn = sqlite3.connect('transporte_logistico.db')
+c = conn.cursor()
+
+# Inserir 10 mil registros na tabela de Clientes
+for _ in range(10000):
+    nome_cliente = fake.name()
+    endereco_cliente = fake.address()
+    contato_cliente = fake.phone_number()
+    tipo_cliente = fake.random_element(elements=('Empresa', 'Pessoa Física'))
+    c.execute("INSERT INTO Clientes (NomeCliente, EnderecoCliente, ContatoCliente, TipoCliente) VALUES (?, ?, ?, ?)", (nome_cliente, endereco_cliente, contato_cliente, tipo_cliente))
+
+# Commit para salvar as alterações
+conn.commit()
+
+# Fechar a conexão
+conn.close()
+
+
